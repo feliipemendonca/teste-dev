@@ -1,0 +1,58 @@
+services:
+    db:
+        image: postgres:15
+        container_name: postgres-db
+        environment:
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: toor
+            POSTGRES_DB: laravel_db
+        volumes:
+            - db:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
+        networks:
+            - laravel
+
+    php:
+        build: ./docker/php
+        container_name: php-app
+        ports:
+            - "8000:80"
+        volumes:
+            - ./:/var/www/
+        depends_on:
+            - db
+        networks:
+            - laravel
+
+    nginx:
+        image: jguyomard/laravel-nginx:1.13
+        container_name: nginx-app
+        volumes_from:
+            - php
+        ports:
+            - "80:80"
+        depends_on:
+            - php
+        networks:
+            - laravel
+
+    admin:
+        image: dpage/pgadmin4:latest
+        container_name: pgadmin
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@pgadmin.com
+            PGADMIN_DEFAULT_PASSWORD: admin
+        ports:
+            - "8060:80"
+        depends_on:
+            - db
+        networks:
+            - laravel
+
+volumes:
+    db:
+
+networks:
+    laravel:
+        driver: bridge
